@@ -48,6 +48,13 @@
             </intent-filter>
         </receiver>
 
+        <provider
+            android:name=".contentprovider.MyContentProvider"
+            android:authorities="com.lmy.provider"
+            android:exported="true"
+            android:readPermission="com.example.contentproviderdemo.READ"
+            android:writePermission="com.example.contentproviderdemo.WRITE" />
+
     </application>
 
 </manifest>
