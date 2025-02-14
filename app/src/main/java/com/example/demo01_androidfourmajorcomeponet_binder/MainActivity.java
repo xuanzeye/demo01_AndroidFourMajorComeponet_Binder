@@ -4,10 +4,13 @@ import android.app.Service;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.ServiceConnection;
+import android.net.ConnectivityManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.os.RemoteException;
 import android.provider.ContactsContract;
 import android.util.Log;
 import android.view.View;
@@ -16,20 +19,18 @@ import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
 
+import com.example.demo01_androidfourmajorcomeponet_binder.receiver.DynamicBroadcast;
+import com.example.demo01_androidfourmajorcomeponet_binder.receiver.StaticBroadcast;
 import com.example.demo01_androidfourmajorcomeponet_binder.service.BindService;
+import com.example.demo01_androidfourmajorcomeponet_binder.IMyAidlInterface;
 
 public class MainActivity extends AppCompatActivity {
-    private static final String TAG_ActivityLifeCycle= "ActivityLifeCycle";
+    private static final String TAG_ActivityLifeCycle = "ActivityLifeCycle";
     private static final String TAG_ServiceBindActivity = "ServiceBindActivity";
-    private static final String TAG_DynamicBroadcastReceiver = "DynamicBroadcastReceiver";
-    private static final String TAG_StaticBroadcastReceiver = "StaticBroadcastReceiver";
 
     private BindService mBindService;
-    private Boolean mBound;
+    private Boolean mBound = false;
     private final ServiceConnection mConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
@@ -44,33 +45,26 @@ public class MainActivity extends AppCompatActivity {
             mBound = false;
             Log.d(TAG_ServiceBindActivity, "onServiceDisconnected() called with: name = [" + name + "]");
         }
-
     };
 
-    //aidl
-    private IMyAidlInterface aidlInterface;
-    private Context mContext;
-    private ServiceConnection mConnectionAidl = new ServiceConnection() {
-
+    private IMyAidlInterface mAidlService;
+    private Boolean mAidlBound = false;
+    private final ServiceConnection mConnectionAidl = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
-            //Log.e(TAG_ActivityLifeCycle, "onServiceConnected() called with: name = [" + name + "], service = [" + service + "]");
-            Log.e(TAG_ServiceBindActivity, "aidl");
-            aidlInterface = IMyAidlInterface.Stub.asInterface(service);
-            try {
-                String result = String.valueOf(aidlInterface.add(1, 2));
-                Toast.makeText(mContext, result, Toast.LENGTH_SHORT).show();
-                Log.e(TAG_ServiceBindActivity, "onServiceConnected() called with: result = [" + result + "]");
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+            mAidlService = IMyAidlInterface.Stub.asInterface(service);
+            mAidlBound = true;
+            Log.d(TAG_ServiceBindActivity, "onServiceConnected() called with: name = [" + name + "], service = [" + service + "]");
         }
 
         @Override
         public void onServiceDisconnected(ComponentName name) {
-            aidlInterface = null;
+            mAidlBound = false;
+            Log.d(TAG_ServiceBindActivity, "onServiceDisconnected() called with: name = [" + name + "]");
         }
     };
+
+    private DynamicBroadcast mReceiver;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -103,17 +97,18 @@ public class MainActivity extends AppCompatActivity {
             startActivity(smsIntent);
         });
 
-        //绑定服务按钮
+        // 绑定服务按钮
         Button bindServiceButton = findViewById(R.id.btn_Service_bindService);
         bindServiceButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(MainActivity.this, BindService.class);
-                bindService(intent, mConnection, Service.BIND_AUTO_CREATE);
+                boolean isBound = bindService(intent, mConnection, Service.BIND_AUTO_CREATE);
+                Log.d(TAG_ServiceBindActivity, "bindService() called with: isBound = [" + isBound + "]");
             }
         });
 
-        //解绑服务
+        // 解绑服务
         Button unbindServiceButton = findViewById(R.id.btn_Service_unbindService);
         unbindServiceButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -122,7 +117,7 @@ public class MainActivity extends AppCompatActivity {
                     unbindService(mConnection);
                     mBound = false;
                 } else {
-                    Log.d(TAG_ActivityLifeCycle, "no service to unbind.");
+                    Log.d(TAG_ServiceBindActivity, "no service to unbind.");
                 }
             }
         });
@@ -142,17 +137,83 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        //绑定aidl服务按钮
+        // 绑定aidl服务按钮
         Button bindAidlServiceButton = findViewById(R.id.btn_BindService_aidl);
         bindAidlServiceButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent serviceIntent = new Intent("com.example.demo01_androidfourmajorcomeponent_binder");
+                Intent serviceIntent = new Intent("com.example.demo01_androidfourmajorcomeponet_binder.aidlService");
                 serviceIntent.setPackage("com.example.demo01_androidfourmajorcomeponet_binder");
-                bindService(serviceIntent, mConnectionAidl, Service.BIND_AUTO_CREATE);
+                boolean isBound = bindService(serviceIntent, mConnectionAidl, Service.BIND_AUTO_CREATE);
+                Log.d(TAG_ServiceBindActivity, "bindService() called with: isBound = [" + isBound + "]");
             }
         });
 
+        // 解绑aidl服务按钮
+        Button unbindAidlServiceButton = findViewById(R.id.btn_BindService_unbindAidl);
+        unbindAidlServiceButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (mAidlBound) {
+                    unbindService(mConnectionAidl);
+                    mAidlBound = false;
+                } else {
+                    Log.d(TAG_ServiceBindActivity, "no aidl service to unbind.");
+                }
+            }
+        });
 
+        // 调用aidl服务方法按钮
+        Button callAidlMethodButton = findViewById(R.id.btn_BindService_callAidlMethod);
+        callAidlMethodButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (!mAidlBound) {
+                    Toast.makeText(MainActivity.this, "AIDL service is not bound", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                try {
+                    int result = mAidlService.add(5, 10);
+                    String message = mAidlService.getMessage("World");
+                    Toast.makeText(MainActivity.this, "Result: " + result + ", Message: " + message, Toast.LENGTH_SHORT).show();
+                } catch (RemoteException e) {
+                    e.printStackTrace();
+                    Toast.makeText(MainActivity.this, "Error calling AIDL service", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+
+//        mReceiver = new DynamicBroadcast();
+//        IntentFilter intentFilter = new IntentFilter();
+//        intentFilter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
+//        registerReceiver(mReceiver, intentFilter);
+//
+//        Button dynamicBroadcastButton = findViewById(R.id.DynamicBroadcast_button);
+//        dynamicBroadcastButton.setOnClickListener(v -> {
+//            Log.d(TAG_ServiceBindActivity, "onClick() called with: v = [" + v + "]");
+//        });
+//
+//        Button startServiceButton = findViewById(R.id.StaticBroadcast_button);
+//        startServiceButton.setOnClickListener(v -> {
+//            Intent broadcastIntent = new Intent("com.example.demo01_androidfourmajorcomeponet_binder.receiver.StaticBroadcast");
+//            sendBroadcast(broadcastIntent);
+//            Log.d(TAG_ServiceBindActivity, "onClick() called with: v = [" + v + "]");
+//        });
     }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (mBound) {
+            unbindService(mConnection);
+            mBound = false;
+        }
+        if (mAidlBound) {
+            unbindService(mConnectionAidl);
+            mAidlBound = false;
+        }
+        unregisterReceiver(mReceiver);
+    }
+
 }
+

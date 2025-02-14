@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
-    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES"/>
+    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES"
+        tools:ignore="QueryAllPackagesPermission" />
 
     <application
         android:allowBackup="true"
@@ -21,7 +22,13 @@
             <intent-filter>
                 <action android:name="com.example.demo01_androidfourmajorcomeponet_binder.service.BindService" />
             </intent-filter>
-
+        </service>
+        <service
+            android:name=".service.AidlService"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.example.demo01_androidfourmajorcomeponet_binder.aidlService" />
+            </intent-filter>
         </service>
 
         <activity
@@ -29,7 +36,6 @@
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>

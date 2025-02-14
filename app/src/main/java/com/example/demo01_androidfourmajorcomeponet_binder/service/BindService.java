@@ -8,6 +8,7 @@ import android.util.Log;
 
 import androidx.annotation.Nullable;
 
+
 public class BindService extends Service {
 
     private static final String TAG = "BindService";
@@ -17,7 +18,7 @@ public class BindService extends Service {
 
     }
 
-    @Nullable
+
     @Override
     public IBinder onBind(Intent intent) {
         Log.d(TAG, "onBind() called");
@@ -44,4 +45,6 @@ public class BindService extends Service {
             return BindService.this;
         }
     }
+
+
 }

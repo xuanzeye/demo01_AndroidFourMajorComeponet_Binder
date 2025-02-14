@@ -8,6 +8,9 @@ interface IMyAidlInterface {
      * Demonstrates some basic types that you can use as parameters
      * and return values in AIDL.
      */
-    int add(int number1, int number2);
+
+    int add(int a, int b);
+
+    String getMessage(String name);
 
 }
