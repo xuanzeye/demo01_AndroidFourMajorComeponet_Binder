@@ -6,10 +6,10 @@ import android.content.Intent;
 import android.util.Log;
 import android.widget.Toast;
 
-public class StaticBroadcast extends BroadcastReceiver {
+public class StaticBroadcastReceiver extends BroadcastReceiver {
     private static final String TAG = "StaticBroadcast";
 
-    public  StaticBroadcast() {
+    public StaticBroadcastReceiver() {
 
     }
     @Override
@@ -17,4 +17,5 @@ public class StaticBroadcast extends BroadcastReceiver {
         Toast.makeText(context, "Received:" + intent.getAction(), Toast.LENGTH_SHORT).show();
         Log.d(TAG, "onReceive() called with: context = [" + context + "], intent = [" + intent + "]");
     }
+
 }

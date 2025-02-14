@@ -2,7 +2,6 @@ package com.example.demo01_androidfourmajorcomeponet_binder;
 
 import android.app.Service;
 import android.content.ComponentName;
-import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
@@ -20,10 +19,8 @@ import android.widget.Toast;
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.example.demo01_androidfourmajorcomeponet_binder.receiver.DynamicBroadcast;
-import com.example.demo01_androidfourmajorcomeponet_binder.receiver.StaticBroadcast;
+import com.example.demo01_androidfourmajorcomeponet_binder.receiver.DynamicBroadcastReceiver;
 import com.example.demo01_androidfourmajorcomeponet_binder.service.BindService;
-import com.example.demo01_androidfourmajorcomeponet_binder.IMyAidlInterface;
 
 public class MainActivity extends AppCompatActivity {
     private static final String TAG_ActivityLifeCycle = "ActivityLifeCycle";
@@ -64,7 +61,7 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
-    private DynamicBroadcast mReceiver;
+    private DynamicBroadcastReceiver mReceiver;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -183,27 +180,54 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-//        mReceiver = new DynamicBroadcast();
-//        IntentFilter intentFilter = new IntentFilter();
-//        intentFilter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
-//        registerReceiver(mReceiver, intentFilter);
-//
-//        Button dynamicBroadcastButton = findViewById(R.id.DynamicBroadcast_button);
-//        dynamicBroadcastButton.setOnClickListener(v -> {
-//            Log.d(TAG_ServiceBindActivity, "onClick() called with: v = [" + v + "]");
-//        });
-//
-//        Button startServiceButton = findViewById(R.id.StaticBroadcast_button);
-//        startServiceButton.setOnClickListener(v -> {
-//            Intent broadcastIntent = new Intent("com.example.demo01_androidfourmajorcomeponet_binder.receiver.StaticBroadcast");
-//            sendBroadcast(broadcastIntent);
-//            Log.d(TAG_ServiceBindActivity, "onClick() called with: v = [" + v + "]");
-//        });
+
+        mReceiver = new DynamicBroadcastReceiver();
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
+        registerReceiver(mReceiver, intentFilter);
+
+        Button dynamicBroadcastButton = findViewById(R.id.DynamicBroadcast_button);
+        dynamicBroadcastButton.setOnClickListener(v -> {
+            Log.d(TAG_ServiceBindActivity, "onClick() called with: v = [" + v + "]");
+        });
+
+        Button startServiceButton = findViewById(R.id.StaticBroadcast_button);
+        startServiceButton.setOnClickListener(v -> {
+            Intent broadcastIntent = new Intent("com.example.demo01_androidfourmajorcomeponet_binder.receiver.StaticBroadcast");
+            sendBroadcast(broadcastIntent);
+            Log.d(TAG_ServiceBindActivity, "onClick() called with: v = [" + v + "]");
+        });
+
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        Log.d(TAG_ActivityLifeCycle, "onStart() called");
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        Log.d(TAG_ActivityLifeCycle, "onResume() called");
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        Log.d(TAG_ActivityLifeCycle, "onPause() called");
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        Log.d(TAG_ActivityLifeCycle, "onStop() called");
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        Log.d(TAG_ActivityLifeCycle, "onDestroy() called");
         if (mBound) {
             unbindService(mConnection);
             mBound = false;
